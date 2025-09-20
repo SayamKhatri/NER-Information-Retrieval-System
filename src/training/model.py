@@ -1,10 +1,9 @@
 from transformers import AutoModelForTokenClassification
-from dataset import id2label
-from config import label2id
 from peft import LoraConfig, get_peft_model
+from transformers import AutoTokenizer
 
 
-def load_model():
+def load_model(label2id, id2label):
     model = AutoModelForTokenClassification.from_pretrained(
         "dmis-lab/biobert-base-cased-v1.1",
         num_labels=len(label2id),
@@ -14,7 +13,13 @@ def load_model():
 
     return model
 
-def peft_model():
+def load_tokenizer():
+    model_name = "dmis-lab/biobert-base-cased-v1.1"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    
+    return tokenizer
+
+def peft_model(label2id, id2label):
     lora_config = LoraConfig(
         r=8,              # rank
         lora_alpha=16,    # scaling
@@ -23,7 +28,7 @@ def peft_model():
         task_type="TOKEN_CLS"
     )
 
-    model = load_model()
+    model = load_model(label2id, id2label)
     model = get_peft_model(model, lora_config)
     model.print_trainable_parameters()
 

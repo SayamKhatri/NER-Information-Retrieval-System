@@ -1,13 +1,15 @@
 import pandas as pd 
 import boto3
-from config import BUCKET_NAME, TRAIN_DATA, TEST_DATA, VALID_DATA, label2id
-from transformers import AutoTokenizer
+from src.training.config import BUCKET_NAME, TRAIN_DATA, TEST_DATA, VALID_DATA, label2id
 from datasets import Dataset
+from src.training.model import load_tokenizer
+import os
 
 def download_data():
     s3 = boto3.client('s3')
 
     object_keys = [TRAIN_DATA, TEST_DATA, VALID_DATA]
+    os.makedirs('data', exist_ok=True)
 
     for key in object_keys:
         s3.download_file(
@@ -16,6 +18,7 @@ def download_data():
 
 def get_data():
     download_data()
+    print('Data Downloaded!')
     train_data = pd.read_parquet(f'data/{TRAIN_DATA}')
     test_data = pd.read_parquet(f'data/{TEST_DATA}')
     valid_data = pd.read_parquet(f'data/{VALID_DATA}')
@@ -23,16 +26,7 @@ def get_data():
     return train_data, test_data, valid_data
 
 
-def load_tokenizer():
-    model_name = "dmis-lab/biobert-base-cased-v1.1"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    id2label = {v: k for k, v in label2id.items()}
-
-    return tokenizer, id2label
-
-
-def tokenize_and_align_labels(examples):
-    tokenizer, id2label = load_tokenizer()
+def tokenize_and_align_labels(tokenizer, examples):
 
     tokenized_inputs = tokenizer(
         examples["tokens"],
@@ -77,14 +71,16 @@ def tokenize_and_align_labels(examples):
 
 
 def make_dataset():
+    id2label = {v: k for k, v in label2id.items()}
+    tokenizer = load_tokenizer()
     train_df, test_df, valid_df = get_data()
     train_dataset = Dataset.from_pandas(train_df)
     val_dataset   = Dataset.from_pandas(valid_df)
     test_dataset  = Dataset.from_pandas(test_df)
 
-    train_tokenized = train_dataset.map(tokenize_and_align_labels, batched=True)
-    val_tokenized   = val_dataset.map(tokenize_and_align_labels, batched=True)
-    test_tokenized  = test_dataset.map(tokenize_and_align_labels, batched=True)
+    train_tokenized = train_dataset.map(lambda x: tokenize_and_align_labels(tokenizer, x), batched=True)
+    val_tokenized   = val_dataset.map(lambda x: tokenize_and_align_labels(tokenizer, x), batched=True)
+    test_tokenized  = test_dataset.map(lambda x: tokenize_and_align_labels(tokenizer, x), batched=True)
 
-    return train_tokenized, test_tokenized, val_tokenized
+    return train_tokenized, test_tokenized, val_tokenized, label2id, id2label
 
