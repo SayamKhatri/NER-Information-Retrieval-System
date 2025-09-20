@@ -1,0 +1,6 @@
+peft 
+transformers 
+datasets 
+evaluate 
+seqeval
+boto3
