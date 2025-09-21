@@ -8,13 +8,11 @@ def run_pipeline(config):
     train_tokenized, test_tokenized, val_tokenized, label2id, id2label = make_dataset()
     print('Dataset step ran successful!')
     model = peft_model(label2id, id2label)
+    print('Model load successful!')
     tokenizer = load_tokenizer()
     trainer = train(model, tokenizer, train_tokenized, val_tokenized, 
                     config['output_dir'], id2label, config['epochs'])
     evaluate_model(trainer, test_tokenized)
-
-
-
 
 
 if __name__ == "__main__":

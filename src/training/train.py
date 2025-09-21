@@ -51,7 +51,7 @@ def train(model, tokenizer, train_tokenized, val_tokenized, output_dir, id2label
     compute_metrics=build_compute_metrics(id2label),
     )
 
-
+    print('Training Started!')
     trainer.train()
     trainer.save_model(output_dir)
     tokenizer.save_pretrained(output_dir)
