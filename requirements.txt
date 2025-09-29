@@ -4,3 +4,4 @@ datasets
 evaluate 
 seqeval
 boto3
+pyyaml
