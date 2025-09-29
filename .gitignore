@@ -83,7 +83,7 @@ profile_default/
 ipython_config.py
 ner
 processed-data/
-data
+data/
 config
 
 # pyenv
